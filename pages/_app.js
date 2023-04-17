@@ -19,7 +19,8 @@ export default function App(props) {
         withNormalizeCSS
         theme={{
           /** Put your mantine theme override here */
-          colorScheme: "light",
+          colorScheme: "dark",
+          defaultRadius: "sm",
         }}
       >
         <Component {...pageProps} />
