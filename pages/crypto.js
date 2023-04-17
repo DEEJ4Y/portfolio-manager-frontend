@@ -15,6 +15,7 @@ import {
 import { Plus } from "tabler-icons-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { getCryptoData } from "@/utils/crypto/prices";
 
 export default function CryptoPage() {
   const [cryptoTransactions] = useLocalStorage({
@@ -27,6 +28,7 @@ export default function CryptoPage() {
   let data = {
     totalInvestedValue: 0,
     totalProfitAndLoss: 0,
+    unrealizedProfitAndLoss: 0,
     totalInstruments: 0,
     instrumentData: {},
   };
@@ -87,18 +89,45 @@ export default function CryptoPage() {
     });
 
     let _totalInvested = 0,
-      _totalProfit = 0;
+      _totalProfit = 0,
+      _totalUnrealized = 0;
     Object.keys(data.instrumentData).forEach((key) => {
       const instrumentData = data.instrumentData[key];
+
+      const avgBuyPrice =
+        instrumentData.totalValue / instrumentData.totalQuantity;
+
+      const crypto = getCryptoData(instrumentData.currency);
+
+      let price = Number(crypto.Price.slice(1).replace(",", "")) * 82;
+
+      const profit = price - avgBuyPrice;
+
+      if (avgBuyPrice) _totalUnrealized += profit;
+
       _totalInvested += Number(instrumentData.totalValue);
       _totalProfit += Number(instrumentData.profit);
     });
 
     data.totalInvestedValue = _totalInvested;
     data.totalProfitAndLoss = _totalProfit;
+    data.unrealizedProfitAndLoss = _totalUnrealized;
 
     setValues(() => data);
   }, [cryptoTransactions]);
+
+  const profitPercent =
+    ((values.totalProfitAndLoss + values.unrealizedProfitAndLoss) /
+      (values.totalInvestedValue +
+        values.totalProfitAndLoss +
+        values.unrealizedProfitAndLoss)) *
+    100;
+  const investmentPercent =
+    (values.totalInvestedValue /
+      (values.totalInvestedValue +
+        values.totalProfitAndLoss +
+        values.unrealizedProfitAndLoss)) *
+    100;
 
   return (
     <DashAppShell>
@@ -122,27 +151,40 @@ export default function CryptoPage() {
             labelColor={values.totalProfitAndLoss >= 0 ? "green" : "red"}
             title="Realized Profit & Loss"
           />
-          {/* <DashColCard
-            label={`${
-              (values.totalProfitAndLoss / values.totalInvestedValue) * 100
-            }%`}
+          <DashColCard
+            type="text"
+            label={`₹${values.unrealizedProfitAndLoss}`}
+            labelColor={values.unrealizedProfitAndLoss >= 0 ? "green" : "red"}
+            title="Unrealized Profit & Loss"
+          />
+          <DashColCard
+            type="text"
+            label={`₹${
+              values.totalProfitAndLoss + values.unrealizedProfitAndLoss
+            }`}
+            labelColor={
+              values.totalProfitAndLoss + values.unrealizedProfitAndLoss >= 0
+                ? "green"
+                : "red"
+            }
+            title="Net Profit & Loss"
+          />
+          <DashColCard
+            label={`${profitPercent.toFixed(2)}%`}
             sections={[
               {
-                value:
-                  (values.totalProfitAndLoss /
-                    (values.totalInvestedValue + values.totalProfitAndLoss)) *
-                  100,
+                value: profitPercent.toFixed(2),
                 color: values.totalProfitAndLoss >= 0 ? "green" : "red",
+                tooltip: profitPercent.toFixed(2),
               },
               {
-                value:
-                  ((values.totalInvestedValue + values.totalProfitAndLoss) /
-                    values.totalInvestedValue) *
-                  100,
-                color: values.totalProfitAndLoss >= 0 ? "green" : "red",
+                value: investmentPercent.toFixed(2),
+                color: "blue",
+                tooltip: investmentPercent.toFixed(2),
               },
             ]}
-          /> */}
+            title="Net Profit & Loss"
+          />
         </Grid>
 
         <Group position="apart" mb="md">
@@ -165,6 +207,8 @@ export default function CryptoPage() {
               <th>Currency</th>
               <th>Quantity</th>
               <th>Invested Amount</th>
+              <th>Average price</th>
+              <th>YTP</th>
               <th>Realized Profit</th>
               <th>Unrealized Profit</th>
             </tr>
@@ -172,14 +216,39 @@ export default function CryptoPage() {
           <tbody>
             {Object.keys(values.instrumentData).map((key, idx) => {
               const instrumentData = values.instrumentData[key];
+              const avgBuyPrice =
+                instrumentData.totalValue / instrumentData.totalQuantity;
+
+              const crypto = getCryptoData(instrumentData.currency);
+
+              let price = Number(crypto.Price.slice(1).replace(",", "")) * 82;
+
+              const profit = price - avgBuyPrice;
               return (
                 <tr key={`${key}-${idx}`}>
                   <td>{idx + 1}</td>
                   <td>{instrumentData.currency}</td>
                   <td>{instrumentData.totalQuantity}</td>
                   <td>{instrumentData.totalValue}</td>
-                  <td>{instrumentData.profit}</td>
-                  <td>0</td>
+                  <td>
+                    {instrumentData.totalValue / instrumentData.totalQuantity ||
+                      "-"}
+                  </td>
+                  <td>
+                    <Text color={price >= 0 ? "green" : "red"}>
+                      {price || "-"}
+                    </Text>
+                  </td>
+                  <td>
+                    <Text color={instrumentData.profit >= 0 ? "green" : "red"}>
+                      {instrumentData.profit}
+                    </Text>
+                  </td>
+                  <td>
+                    <Text color={profit >= 0 ? "green" : "red"}>
+                      {profit || "-"}
+                    </Text>
+                  </td>
                 </tr>
               );
             })}

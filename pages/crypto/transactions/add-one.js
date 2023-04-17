@@ -104,6 +104,7 @@ const BuyForm = () => {
         <Select
           label="Currency"
           placeholder="Pick one"
+          searchable
           name="currency"
           data={cryptocurrencies}
           {...form.getInputProps("currency")}
@@ -211,6 +212,7 @@ const SellForm = () => {
         <Select
           label="Currency"
           placeholder="Pick one"
+          searchable
           name="currency"
           data={cryptocurrencies}
           {...form.getInputProps("currency")}
