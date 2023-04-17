@@ -1,24 +1,154 @@
 import DashAppShell from "@/components/AppShell";
 import { useLocalStorage } from "@mantine/hooks";
-import { Button, Group, Text, Title } from "@mantine/core";
+import {
+  Button,
+  Card,
+  Container,
+  Center,
+  Grid,
+  Group,
+  RingProgress,
+  Text,
+  Title,
+  Table,
+} from "@mantine/core";
 import { Plus } from "tabler-icons-react";
 import Link from "next/link";
+import { useEffect, useState } from "react";
 
 export default function CryptoPage() {
   const [cryptoTransactions] = useLocalStorage({
     key: "transactions/crypto",
     defaultValue: [],
+    serialize: JSON.stringify,
+    deserialize: JSON.parse,
   });
+
+  let data = {
+    totalInvestedValue: 0,
+    totalProfitAndLoss: 0,
+    totalInstruments: 0,
+    instrumentData: {},
+  };
+
+  const [values, setValues] = useState(data);
+
+  useEffect(() => {
+    cryptoTransactions.forEach((transaction) => {
+      if (transaction.type === "BUY") {
+        const transactionValue =
+          Number(transaction.quantity) * Number(transaction.orderValue);
+        // data.totalInvestedValue += transactionValue;
+        if (!data.instrumentData[transaction.currency]) {
+          data.totalInstruments += 1;
+          data.instrumentData[transaction.currency] = {
+            currency: transaction.currency,
+            totalQuantity: Number(transaction.quantity),
+            totalValue: Number(transaction.orderValue),
+            profit: 0,
+          };
+        } else {
+          data.instrumentData[transaction.currency].totalQuantity += Number(
+            transaction.quantity
+          );
+          data.instrumentData[transaction.currency].totalValue +=
+            transactionValue;
+        }
+      } else if (transaction.type === "SELL") {
+        const avgPriceBeforeSell =
+          data.instrumentData[transaction.currency].totalValue /
+          data.instrumentData[transaction.currency].totalQuantity;
+        const sellValue = Number(transaction.orderValue);
+
+        const profit =
+          avgPriceBeforeSell *
+            data.instrumentData[transaction.currency].totalQuantity -
+          sellValue * Number(transaction.quantity);
+
+        if (sellValue > avgPriceBeforeSell) {
+          data.totalProfitAndLoss -= profit;
+          data.instrumentData[transaction.currency].profit -= profit;
+        } else {
+          data.totalProfitAndLoss += profit;
+          data.instrumentData[transaction.currency].profit += profit;
+        }
+
+        data.totalInvestedValue -= avgPriceBeforeSell * transaction.quantity;
+        data.instrumentData[transaction.currency].totalQuantity -= Number(
+          transaction.quantity
+        );
+        data.instrumentData[transaction.currency].totalValue -=
+          avgPriceBeforeSell * transaction.quantity;
+
+        if (data.instrumentData[transaction.currency].totalQuantity <= 0) {
+          data.totalInstruments -= 1;
+        }
+      }
+    });
+
+    let _totalInvested = 0,
+      _totalProfit = 0;
+    Object.keys(data.instrumentData).forEach((key) => {
+      const instrumentData = data.instrumentData[key];
+      _totalInvested += Number(instrumentData.totalValue);
+      _totalProfit += Number(instrumentData.profit);
+    });
+
+    data.totalInvestedValue = _totalInvested;
+    data.totalProfitAndLoss = _totalProfit;
+
+    setValues(() => data);
+  }, [cryptoTransactions]);
 
   return (
     <DashAppShell>
-      {JSON.stringify({ cryptoTransactions })}
       <div>
-        <Title>Crypto Holdings</Title>
-        <Group position="apart">
+        <Title mb="md">Crypto Holdings</Title>
+
+        <Grid mb="md">
+          <DashColCard
+            type="text"
+            label={`₹${values.totalInvestedValue}`}
+            title="Invested Amount"
+          />
+          <DashColCard
+            type="text"
+            label={cryptoTransactions.length}
+            title="Transactions"
+          />
+          <DashColCard
+            type="text"
+            label={`₹${values.totalProfitAndLoss}`}
+            labelColor={values.totalProfitAndLoss >= 0 ? "green" : "red"}
+            title="Realized Profit & Loss"
+          />
+          {/* <DashColCard
+            label={`${
+              (values.totalProfitAndLoss / values.totalInvestedValue) * 100
+            }%`}
+            sections={[
+              {
+                value:
+                  (values.totalProfitAndLoss /
+                    (values.totalInvestedValue + values.totalProfitAndLoss)) *
+                  100,
+                color: values.totalProfitAndLoss >= 0 ? "green" : "red",
+              },
+              {
+                value:
+                  ((values.totalInvestedValue + values.totalProfitAndLoss) /
+                    values.totalInvestedValue) *
+                  100,
+                color: values.totalProfitAndLoss >= 0 ? "green" : "red",
+              },
+            ]}
+          /> */}
+        </Grid>
+
+        <Group position="apart" mb="md">
           <Text>
-            {cryptoTransactions.length > 0
-              ? `You have ${cryptoTransactions.length} transactions.`
+            {values.totalInstruments > 0
+              ? `You have ${values.totalInstruments} holdings.`
               : "You have no crypto holdings."}
           </Text>
           <Group>
@@ -27,7 +157,81 @@ export default function CryptoPage() {
             </Link>
           </Group>
         </Group>
+
+        <Table>
+          <thead>
+            <tr>
+              <th>S. No.</th>
+              <th>Currency</th>
+              <th>Quantity</th>
+              <th>Invested Amount</th>
+              <th>Realized Profit</th>
+              <th>Unrealized Profit</th>
+            </tr>
+          </thead>
+          <tbody>
+            {Object.keys(values.instrumentData).map((key, idx) => {
+              const instrumentData = values.instrumentData[key];
+              return (
+                <tr key={`${key}-${idx}`}>
+                  <td>{idx + 1}</td>
+                  <td>{instrumentData.currency}</td>
+                  <td>{instrumentData.totalQuantity}</td>
+                  <td>{instrumentData.totalValue}</td>
+                  <td>{instrumentData.profit}</td>
+                  <td>0</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </Table>
       </div>
     </DashAppShell>
   );
 }
+
+export const DashColCard = ({ label, sections, title, type, labelColor }) => {
+  if (type === "text")
+    return (
+      <Grid.Col xl={3} lg={4} md={6}>
+        <Card>
+          <Container
+            display="flex"
+            style={{
+              justifyContent: "center",
+              alignItems: "center",
+              height: 186,
+            }}
+          >
+            <Text align="center" weight={700} size={48} color={labelColor}>
+              {label}
+            </Text>
+          </Container>
+          <Text align="center" weight={700} size="lg">
+            {title}
+          </Text>
+        </Card>
+      </Grid.Col>
+    );
+
+  return (
+    <Grid.Col xl={3} lg={4} md={6}>
+      <Card>
+        <Center>
+          <RingProgress
+            size={186}
+            label={
+              <Text align="center" weight={700} size="xl">
+                {label}
+              </Text>
+            }
+            sections={sections}
+          />
+        </Center>
+        <Text align="center" weight={700} size="lg">
+          {title}
+        </Text>
+      </Card>
+    </Grid.Col>
+  );
+};
