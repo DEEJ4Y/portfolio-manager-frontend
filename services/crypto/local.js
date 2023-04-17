@@ -10,6 +10,7 @@ export const insertCryptoTransaction = (transactionData, transactions) => {
     "quantity",
     "orderValue",
     "timestamp",
+    "type",
   ];
 
   let valid = true;
