@@ -1,5 +1,6 @@
 import Head from "next/head";
 import { MantineProvider } from "@mantine/core";
+import { Notifications } from "@mantine/notifications";
 
 export default function App(props) {
   const { Component, pageProps } = props;
@@ -22,6 +23,7 @@ export default function App(props) {
           colorScheme: "light",
         }}
       >
+        <Notifications />
         <Component {...pageProps} />
       </MantineProvider>
     </>
