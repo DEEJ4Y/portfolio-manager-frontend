@@ -132,7 +132,7 @@ export default function CryptoPage() {
   return (
     <DashAppShell>
       <div>
-        <Title mb="md">Crypto Holdings</Title>
+        <Title mb="md">Cryptocurrency</Title>
 
         <Grid mb="md">
           <DashColCard
@@ -170,7 +170,7 @@ export default function CryptoPage() {
             title="Net Profit & Loss"
           />
           <DashColCard
-            label={`${profitPercent.toFixed(2)}%`}
+            label={profitPercent ? `${profitPercent.toFixed(2)}%` : "0%"}
             sections={[
               {
                 value: profitPercent.toFixed(2),
@@ -197,6 +197,9 @@ export default function CryptoPage() {
               : "You have no crypto holdings."}
           </Text>
           <Group>
+            <Link href="/crypto/transactions">
+              <Button>My Transactions</Button>
+            </Link>
             <Link href="/crypto/transactions/add-one">
               <Button leftIcon={<Plus size={16} />}>Add Transaction</Button>
             </Link>
