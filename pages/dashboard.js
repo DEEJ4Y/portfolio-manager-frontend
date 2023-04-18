@@ -279,16 +279,16 @@ export default function DashboardPage() {
   }, [stockTransactions, cryptoTransactions]);
 
   const totalInvested =
-    Number(data.cryptoPAndL.totalInvestedValue) +
-    Number(data.stocksPAndL.totalInvestedValue);
+    Number(data.cryptoPAndL?.totalInvestedValue) +
+    Number(data.stocksPAndL?.totalInvestedValue);
 
   const totalRealizedProfit =
-    Number(data.cryptoPAndL.totalProfitAndLoss) +
-    Number(data.stocksPAndL.totalProfitAndLoss);
+    Number(data.cryptoPAndL?.totalProfitAndLoss) +
+    Number(data.stocksPAndL?.totalProfitAndLoss);
 
   const totalUnrealizedProfit =
-    Number(data.cryptoPAndL.unrealizedProfitAndLoss) +
-    Number(data.stocksPAndL.unrealizedProfitAndLoss);
+    Number(data.cryptoPAndL?.unrealizedProfitAndLoss) +
+    Number(data.stocksPAndL?.unrealizedProfitAndLoss);
 
   const totalNetProfit = totalRealizedProfit + totalUnrealizedProfit;
 
@@ -319,25 +319,25 @@ export default function DashboardPage() {
           labelColor={totalNetProfit >= 0 ? "green" : "red"}
         />
         <DashColCard
-          label=""
+          label="100%"
           sections={[
             {
               tooltip: `Crypto ${(
-                (Number(data.cryptoPAndL.totalInvestedValue) * 100) /
+                (Number(data.cryptoPAndL?.totalInvestedValue) * 100) /
                 totalInvested
               ).toFixed(2)}%`,
               value:
-                (Number(data.cryptoPAndL.totalInvestedValue) * 100) /
+                (Number(data.cryptoPAndL?.totalInvestedValue) * 100) /
                 totalInvested,
               color: "yellow",
             },
             {
               tooltip: `Stocks ${(
-                (Number(data.stocksPAndL.totalInvestedValue) * 100) /
+                (Number(data.stocksPAndL?.totalInvestedValue) * 100) /
                 totalInvested
               ).toFixed(2)}%`,
               value: (
-                (Number(data.stocksPAndL.totalInvestedValue) * 100) /
+                (Number(data.stocksPAndL?.totalInvestedValue) * 100) /
                 totalInvested
               ).toFixed(2),
               color: "blue",
@@ -350,21 +350,21 @@ export default function DashboardPage() {
           sections={[
             {
               tooltip: `Crypto ${(
-                (Number(data.cryptoPAndL.totalProfitAndLoss) * 100) /
+                (Number(data.cryptoPAndL?.totalProfitAndLoss) * 100) /
                 totalRealizedProfit
               ).toFixed(2)}%`,
               value:
-                (Number(data.cryptoPAndL.totalProfitAndLoss) * 100) /
+                (Number(data.cryptoPAndL?.totalProfitAndLoss) * 100) /
                 totalRealizedProfit,
               color: "cyan",
             },
             {
               tooltip: `Stocks ${(
-                (Number(data.stocksPAndL.totalProfitAndLoss) * 100) /
+                (Number(data.stocksPAndL?.totalProfitAndLoss) * 100) /
                 totalRealizedProfit
               ).toFixed(2)}%`,
               value: (
-                (Number(data.stocksPAndL.totalProfitAndLoss) * 100) /
+                (Number(data.stocksPAndL?.totalProfitAndLoss) * 100) /
                 totalRealizedProfit
               ).toFixed(2),
               color: "red",
@@ -379,21 +379,21 @@ export default function DashboardPage() {
           sections={[
             {
               tooltip: `Crypto ${(
-                (Number(data.cryptoPAndL.unrealizedProfitAndLoss) * 100) /
+                (Number(data.cryptoPAndL?.unrealizedProfitAndLoss) * 100) /
                 totalUnrealizedProfit
               ).toFixed(2)}%`,
               value:
-                (Number(data.cryptoPAndL.unrealizedProfitAndLoss) * 100) /
+                (Number(data.cryptoPAndL?.unrealizedProfitAndLoss) * 100) /
                 totalUnrealizedProfit,
               color: "orange",
             },
             {
               tooltip: `Stocks ${(
-                (Number(data.stocksPAndL.unrealizedProfitAndLoss) * 100) /
+                (Number(data.stocksPAndL?.unrealizedProfitAndLoss) * 100) /
                 totalUnrealizedProfit
               ).toFixed(2)}%`,
               value: (
-                (Number(data.stocksPAndL.unrealizedProfitAndLoss) * 100) /
+                (Number(data.stocksPAndL?.unrealizedProfitAndLoss) * 100) /
                 totalUnrealizedProfit
               ).toFixed(2),
               color: "purple",
@@ -406,28 +406,28 @@ export default function DashboardPage() {
           sections={[
             {
               tooltip: `Crypto ${(
-                ((Number(data.cryptoPAndL.unrealizedProfitAndLoss) +
-                  Number(data.cryptoPAndL.totalProfitAndLoss)) *
+                ((Number(data.cryptoPAndL?.unrealizedProfitAndLoss) +
+                  Number(data.cryptoPAndL?.totalProfitAndLoss)) *
                   100) /
                 totalNetProfit
               ).toFixed(2)}%`,
               value:
-                ((Number(data.cryptoPAndL.unrealizedProfitAndLoss) +
-                  Number(data.cryptoPAndL.totalProfitAndLoss)) *
+                ((Number(data.cryptoPAndL?.unrealizedProfitAndLoss) +
+                  Number(data.cryptoPAndL?.totalProfitAndLoss)) *
                   100) /
                 totalNetProfit,
               color: "orange",
             },
             {
               tooltip: `Stocks ${(
-                ((Number(data.stocksPAndL.unrealizedProfitAndLoss) +
-                  Number(data.stocksPAndL.totalProfitAndLoss)) *
+                ((Number(data.stocksPAndL?.unrealizedProfitAndLoss) +
+                  Number(data.stocksPAndL?.totalProfitAndLoss)) *
                   100) /
                 totalNetProfit
               ).toFixed(2)}%`,
               value: (
-                ((Number(data.stocksPAndL.unrealizedProfitAndLoss) +
-                  Number(data.stocksPAndL.totalProfitAndLoss)) *
+                ((Number(data.stocksPAndL?.unrealizedProfitAndLoss) +
+                  Number(data.stocksPAndL?.totalProfitAndLoss)) *
                   100) /
                 totalNetProfit
               ).toFixed(2),
