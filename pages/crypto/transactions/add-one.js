@@ -1,6 +1,7 @@
 import DashAppShell from "@/components/AppShell";
 import { insertCryptoTransaction } from "@/services/crypto/local";
 import cryptocurrencies from "@/utils/crypto/cryptocurrencies";
+import axios from "axios";
 import {
   Button,
   Checkbox,
@@ -75,7 +76,12 @@ const BuyForm = () => {
     },
   });
 
-  const addTransaction = () => {
+  const [userDetailsData, setUserDetailsData] = useLocalStorage({
+    key: "userDetails",
+    serialize: JSON.stringify,
+    deserialize: JSON.parse,
+  });
+  const addTransaction = async () => {
     const validationStatus = form.validate();
 
     if (!form.values.loading && !validationStatus.hasErrors) {
@@ -92,6 +98,30 @@ const BuyForm = () => {
         });
         form.setFieldValue("loading", false);
         setCryptoTransactions(() => [...inserted]);
+        try {
+          const postData = async () => {
+            console.log("posted data");
+            const URL = process.env.NEXT_PUBLIC_API_URL;
+            const { loading, ...postData } = form.values;
+            const apiUrl = `${URL}/api/crypto/create`;
+
+            const { data } = await axios.post(
+              apiUrl,
+              { ...postData, user: userDetailsData?._id },
+              {
+                headers: {
+                  Authorization: `Bearer ${userDetailsData?.accessToken}`,
+                },
+              }
+            );
+            // console.log(data);
+          };
+          // console.log(data);
+          postData();
+        } catch (error) {
+          console.log(error.message);
+        }
+
         router.push("/crypto");
       }
     }
