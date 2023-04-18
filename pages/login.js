@@ -50,7 +50,7 @@ export default function LoginPage() {
         message: "User Logged In Successfully",
         color: "green",
       });
-      router.push("/");
+      router.push("/dashboard");
     } catch (error) {
       notifications.show({
         message: "Username or Password is incorrect",

@@ -10,6 +10,7 @@ import {
 } from "@mantine/core";
 import { Header, Menu, Center, Burger } from "@mantine/core";
 import { BrandGithub } from "tabler-icons-react";
+import Link from "next/link";
 // import dotenv from "dotenv";
 // dotenv.config();
 export default function Home() {
@@ -105,14 +106,15 @@ export default function Home() {
           </Text>
         </div>
         <div style={{ display: "flex", marginLeft: "10%" }}>
-          <Button
-            size="xl"
-            variant="gradient"
-            gradient={{ from: "blue", to: "cyan" }}
-            style={{ margin: "3% 3% 10% 0%" }}
-          >
-            Get started
-          </Button>
+          <Link href="/register" style={{ margin: "3% 3% 10% 0%" }}>
+            <Button
+              size="xl"
+              variant="gradient"
+              gradient={{ from: "blue", to: "cyan" }}
+            >
+              Get started
+            </Button>
+          </Link>
 
           <Button
             href="https://github.com/mantinedev/mantine"
