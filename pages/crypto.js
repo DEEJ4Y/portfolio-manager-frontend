@@ -175,15 +175,18 @@ export default function CryptoPage() {
               {
                 value: profitPercent.toFixed(2),
                 color: values.totalProfitAndLoss >= 0 ? "green" : "red",
-                tooltip: profitPercent.toFixed(2),
+                tooltip:
+                  profitPercent.toFixed(2) >= 0
+                    ? `Profit ${profitPercent.toFixed(2)}%`
+                    : `Loss ${profitPercent.toFixed(2)}%`,
               },
               {
                 value: investmentPercent.toFixed(2),
                 color: "blue",
-                tooltip: investmentPercent.toFixed(2),
+                tooltip: `Invested ${investmentPercent.toFixed(2)}%`,
               },
             ]}
-            title="Net Profit & Loss"
+            title="Net Invested"
           />
         </Grid>
 
