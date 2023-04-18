@@ -1,22 +1,29 @@
 import DashAppShell from "@/components/AppShell";
-import { insertCryptoTransaction } from "@/services/crypto/local";
-import cryptocurrencies from "@/utils/crypto/cryptocurrencies";
+import { useState } from "react";
+import { insertStockTransaction } from "@/services/stocks/local";
+import stocks from "@/utils/stocks/stocks";
 import {
   Button,
   Checkbox,
   Container,
+  Group,
   Input,
   Select,
   Stack,
   Tabs,
   Title,
+  Text,
+  Center,
+  Loader,
 } from "@mantine/core";
 import { DateTimePicker } from "@mantine/dates";
 import { useForm } from "@mantine/form";
 import { useLocalStorage } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
 import { useRouter } from "next/router";
-import { Minus, Plus } from "tabler-icons-react";
+import { Minus, Plus, FileUpload, FileDiff } from "tabler-icons-react";
+import { Dropzone, MIME_TYPES } from "@mantine/dropzone";
+import papa from "papaparse";
 
 export default function AddOneCryptoTransaction() {
   return (
@@ -29,12 +36,18 @@ export default function AddOneCryptoTransaction() {
           <Tabs.Tab value="sell" right={<Minus size={16} />}>
             Sell
           </Tabs.Tab>
+          <Tabs.Tab value="upload" right={<FileUpload size={16} />}>
+            Upload
+          </Tabs.Tab>
         </Tabs.List>
         <Tabs.Panel value="buy">
           <BuyForm />
         </Tabs.Panel>
         <Tabs.Panel value="sell">
           <SellForm />
+        </Tabs.Panel>
+        <Tabs.Panel value="upload">
+          <UploadForm />
         </Tabs.Panel>
       </Tabs>
     </DashAppShell>
@@ -44,7 +57,7 @@ export default function AddOneCryptoTransaction() {
 const BuyForm = () => {
   const router = useRouter();
 
-  const [cryptoTransactions, setCryptoTransactions] = useLocalStorage({
+  const [stockTransactions, setStockTransactions] = useLocalStorage({
     key: "transactions/stocks",
     defaultValue: [],
     serialize: JSON.stringify,
@@ -53,7 +66,7 @@ const BuyForm = () => {
 
   const form = useForm({
     initialValues: {
-      currency: null,
+      symbol: null,
       quantity: 0,
       orderValue: 0,
       withCustomDate: false,
@@ -62,8 +75,8 @@ const BuyForm = () => {
       type: "BUY",
     },
     validate: {
-      currency: (value) =>
-        value && value.length > 0 ? null : "Currency is required.",
+      symbol: (value) =>
+        value && value.length > 0 ? null : "Symbol is required.",
       quantity: (value) =>
         value && value > 0 ? null : "Quantity should be more than zero.",
       orderValue: (value) =>
@@ -81,7 +94,7 @@ const BuyForm = () => {
     if (!form.values.loading && !validationStatus.hasErrors) {
       form.setFieldValue("loading", true);
 
-      const inserted = insertCryptoTransaction(form.values, cryptoTransactions);
+      const inserted = insertStockTransaction(form.values, stockTransactions);
 
       if (!inserted) {
         form.setFieldValue("loading", false);
@@ -91,8 +104,8 @@ const BuyForm = () => {
           color: "green",
         });
         form.setFieldValue("loading", false);
-        setCryptoTransactions(() => [...inserted]);
-        router.push("/crypto");
+        setStockTransactions(() => [...inserted]);
+        router.push("/stocks");
       }
     }
   };
@@ -102,12 +115,12 @@ const BuyForm = () => {
       <Title mb="sm">Buy Order</Title>
       <Stack spacing="xs">
         <Select
-          label="Currency"
+          label="Symbol"
           placeholder="Pick one"
           searchable
-          name="currency"
-          data={cryptocurrencies}
-          {...form.getInputProps("currency")}
+          name="symbol"
+          data={stocks}
+          {...form.getInputProps("symbol")}
         />
         <Input.Wrapper label="Quantity" {...form.getInputProps("quantity")}>
           <Input
@@ -152,8 +165,8 @@ const BuyForm = () => {
 const SellForm = () => {
   const router = useRouter();
 
-  const [cryptoTransactions, setCryptoTransactions] = useLocalStorage({
-    key: "transactions/crypto",
+  const [stockTransactions, setStockTransactions] = useLocalStorage({
+    key: "transactions/stocks",
     defaultValue: [],
     serialize: JSON.stringify,
     deserialize: JSON.parse,
@@ -161,7 +174,7 @@ const SellForm = () => {
 
   const form = useForm({
     initialValues: {
-      currency: null,
+      symbol: null,
       quantity: 0,
       orderValue: 0,
       withCustomDate: false,
@@ -170,8 +183,8 @@ const SellForm = () => {
       type: "SELL",
     },
     validate: {
-      currency: (value) =>
-        value && value.length > 0 ? null : "Currency is required.",
+      symbol: (value) =>
+        value && value.length > 0 ? null : "symbol is required.",
       quantity: (value) =>
         value && value > 0 ? null : "Quantity should be more than zero.",
       orderValue: (value) =>
@@ -189,7 +202,7 @@ const SellForm = () => {
     if (!form.values.loading && !validationStatus.hasErrors) {
       form.setFieldValue("loading", true);
 
-      const inserted = insertCryptoTransaction(form.values, cryptoTransactions);
+      const inserted = insertCryptoTransaction(form.values, stockTransactions);
 
       if (!inserted) {
         form.setFieldValue("loading", false);
@@ -199,7 +212,7 @@ const SellForm = () => {
           color: "green",
         });
         form.setFieldValue("loading", false);
-        setCryptoTransactions(() => [...inserted]);
+        setStockTransactions(() => [...inserted]);
         router.push("/crypto");
       }
     }
@@ -210,12 +223,12 @@ const SellForm = () => {
       <Title mb="sm">Sell Order</Title>
       <Stack spacing="xs">
         <Select
-          label="Currency"
+          label="Symbol"
           placeholder="Pick one"
           searchable
-          name="currency"
-          data={cryptocurrencies}
-          {...form.getInputProps("currency")}
+          name="symbol"
+          data={stocks}
+          {...form.getInputProps("symbol")}
         />
         <Input.Wrapper label="Quantity" {...form.getInputProps("quantity")}>
           <Input
@@ -255,4 +268,93 @@ const SellForm = () => {
       </Stack>
     </Container>
   );
+};
+
+const UploadForm = () => {
+  const [_transactions, setStockTransactions] = useLocalStorage({
+    key: "transactions/stocks",
+    defaultValue: [],
+    deserialize: JSON.parse,
+  });
+  const [uploaded, setUploaded] = useState(false);
+
+  const parseFiles = (files) => {
+    papa.parse(files[0], {
+      complete: (data) => {
+        setUploaded(true);
+
+        let transactions = data.data;
+
+        if (transactions) {
+          transactions = transactions.filter((t) => t.symbol.length > 0);
+          let final = [..._transactions];
+
+          transactions.forEach((transaction) => {
+            final = insertStockTransaction(
+              {
+                symbol: transaction.symbol,
+                quantity: transaction.quantity,
+                orderValue: transaction.price,
+                timestamp: new Date(transaction.order_execution_time),
+                type: transaction.trade_type.toUpperCase(),
+              },
+              final
+            );
+          });
+
+          setStockTransactions(() => final);
+          notifications.show({
+            message: "Your transactions were saved successfully!",
+            color: "green",
+          });
+
+          setUploaded(final);
+        } else {
+          notifications.show({
+            message: "There was an error uploading your file.",
+            color: "red",
+          });
+        }
+      },
+      header: true,
+    });
+  };
+
+  if (typeof uploaded === "boolean" && uploaded)
+    return (
+      <Center>
+        <Loader />
+      </Center>
+    );
+  else if (uploaded) {
+    return <div>{JSON.stringify(uploaded)}</div>;
+  } else
+    return (
+      <div>
+        <Dropzone
+          style={{
+            height: "calc(100vh - 5.75rem)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+          mb="sm"
+          accept={MIME_TYPES.csv}
+          onDrop={parseFiles}
+          maxFiles={1}
+        >
+          <Group>
+            <FileDiff size={40} />
+            <div>
+              <Text size="xl" inline>
+                Drag files here or click to select files
+              </Text>
+              <Text size="sm" color="dimmed" inline mt={7}>
+                Upload your single trade CSV file.
+              </Text>
+            </div>
+          </Group>
+        </Dropzone>
+      </div>
+    );
 };

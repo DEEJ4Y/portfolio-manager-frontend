@@ -15,10 +15,10 @@ import {
 import { Plus } from "tabler-icons-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { getCryptoData } from "@/utils/crypto/prices";
+import { getStockData } from "@/utils/stocks/prices";
 
-export default function StocksPage() {
-  const [cryptoTransactions] = useLocalStorage({
+export default function StockPage() {
+  const [stockTransactions] = useLocalStorage({
     key: "transactions/stocks",
     defaultValue: [],
     serialize: JSON.stringify,
@@ -36,54 +36,57 @@ export default function StocksPage() {
   const [values, setValues] = useState(data);
 
   useEffect(() => {
-    cryptoTransactions.forEach((transaction) => {
+    stockTransactions.forEach((transaction) => {
       if (transaction.type === "BUY") {
         const transactionValue =
           Number(transaction.quantity) * Number(transaction.orderValue);
         // data.totalInvestedValue += transactionValue;
-        if (!data.instrumentData[transaction.currency]) {
+        if (!data.instrumentData[transaction.symbol]) {
           data.totalInstruments += 1;
-          data.instrumentData[transaction.currency] = {
-            currency: transaction.currency,
+          data.instrumentData[transaction.symbol] = {
+            symbol: transaction.symbol,
             totalQuantity: Number(transaction.quantity),
-            totalValue: Number(transaction.orderValue),
+            totalValue:
+              Number(transaction.orderValue) * Number(transaction.quantity),
             profit: 0,
           };
         } else {
-          data.instrumentData[transaction.currency].totalQuantity += Number(
+          data.instrumentData[transaction.symbol].totalQuantity += Number(
             transaction.quantity
           );
-          data.instrumentData[transaction.currency].totalValue +=
+          data.instrumentData[transaction.symbol].totalValue +=
             transactionValue;
         }
       } else if (transaction.type === "SELL") {
-        const avgPriceBeforeSell =
-          data.instrumentData[transaction.currency].totalValue /
-          data.instrumentData[transaction.currency].totalQuantity;
-        const sellValue = Number(transaction.orderValue);
+        if (data.instrumentData[transaction.symbol]) {
+          const avgPriceBeforeSell =
+            data.instrumentData[transaction.symbol].totalValue /
+            data.instrumentData[transaction.symbol].totalQuantity;
+          const sellValue = Number(transaction.orderValue);
 
-        const profit =
-          avgPriceBeforeSell *
-            data.instrumentData[transaction.currency].totalQuantity -
-          sellValue * Number(transaction.quantity);
+          const profit =
+            avgPriceBeforeSell *
+              data.instrumentData[transaction.symbol].totalQuantity -
+            sellValue * Number(transaction.quantity);
 
-        if (sellValue > avgPriceBeforeSell) {
-          data.totalProfitAndLoss -= profit;
-          data.instrumentData[transaction.currency].profit -= profit;
-        } else {
-          data.totalProfitAndLoss += profit;
-          data.instrumentData[transaction.currency].profit += profit;
-        }
+          if (sellValue > avgPriceBeforeSell) {
+            data.totalProfitAndLoss -= profit;
+            data.instrumentData[transaction.symbol].profit -= profit;
+          } else {
+            data.totalProfitAndLoss += profit;
+            data.instrumentData[transaction.symbol].profit += profit;
+          }
 
-        data.totalInvestedValue -= avgPriceBeforeSell * transaction.quantity;
-        data.instrumentData[transaction.currency].totalQuantity -= Number(
-          transaction.quantity
-        );
-        data.instrumentData[transaction.currency].totalValue -=
-          avgPriceBeforeSell * transaction.quantity;
+          data.totalInvestedValue -= avgPriceBeforeSell * transaction.quantity;
+          data.instrumentData[transaction.symbol].totalQuantity -= Number(
+            transaction.quantity
+          );
+          data.instrumentData[transaction.symbol].totalValue -=
+            avgPriceBeforeSell * transaction.quantity;
 
-        if (data.instrumentData[transaction.currency].totalQuantity <= 0) {
-          data.totalInstruments -= 1;
+          if (data.instrumentData[transaction.symbol].totalQuantity <= 0) {
+            data.totalInstruments -= 1;
+          }
         }
       }
     });
@@ -97,9 +100,9 @@ export default function StocksPage() {
       const avgBuyPrice =
         instrumentData.totalValue / instrumentData.totalQuantity;
 
-      const crypto = getCryptoData(instrumentData.currency);
+      const stock = getStockData(instrumentData.symbol);
 
-      let price = Number(crypto.Price.slice(1).replace(",", "")) * 82;
+      let price = parseFloat(stock.CLOSE).toFixed(2);
 
       const profit = price - avgBuyPrice;
 
@@ -114,7 +117,7 @@ export default function StocksPage() {
     data.unrealizedProfitAndLoss = _totalUnrealized;
 
     setValues(() => data);
-  }, [cryptoTransactions]);
+  }, [stockTransactions]);
 
   const profitPercent =
     ((values.totalProfitAndLoss + values.unrealizedProfitAndLoss) /
@@ -137,37 +140,37 @@ export default function StocksPage() {
         <Grid mb="md">
           <DashColCard
             type="text"
-            label={`₹${values.totalInvestedValue}`}
+            label={`₹${values.totalInvestedValue.toFixed(2)}`}
             title="Invested Amount"
           />
           <DashColCard
             type="text"
-            label={cryptoTransactions.length}
+            label={stockTransactions.length}
             title="Transactions"
           />
           <DashColCard
             type="text"
-            label={`₹${values.totalProfitAndLoss}`}
+            label={`₹${values.totalProfitAndLoss.toFixed(2)}`}
             labelColor={values.totalProfitAndLoss >= 0 ? "green" : "red"}
-            title="Realized Profit & Loss"
+            title="Realized Profit"
           />
           <DashColCard
             type="text"
-            label={`₹${values.unrealizedProfitAndLoss}`}
+            label={`₹${values.unrealizedProfitAndLoss.toFixed(2)}`}
             labelColor={values.unrealizedProfitAndLoss >= 0 ? "green" : "red"}
-            title="Unrealized Profit & Loss"
+            title="Unrealized Profit"
           />
           <DashColCard
             type="text"
-            label={`₹${
+            label={`₹${Number(
               values.totalProfitAndLoss + values.unrealizedProfitAndLoss
-            }`}
+            ).toFixed(2)}`}
             labelColor={
               values.totalProfitAndLoss + values.unrealizedProfitAndLoss >= 0
                 ? "green"
                 : "red"
             }
-            title="Net Profit & Loss"
+            title="Net Profit Absolute"
           />
           <DashColCard
             label={profitPercent ? `${profitPercent.toFixed(2)}%` : "0%"}
@@ -186,7 +189,7 @@ export default function StocksPage() {
                 tooltip: `Invested ${investmentPercent.toFixed(2)}%`,
               },
             ]}
-            title="Net Invested"
+            title="Net Profit Percentage"
           />
         </Grid>
 
@@ -197,6 +200,9 @@ export default function StocksPage() {
               : "You have no stock holdings."}
           </Text>
           <Group>
+            <Link href="/stocks/transactions">
+              <Button>My Transactions</Button>
+            </Link>
             <Link href="/stocks/transactions/add-one">
               <Button leftIcon={<Plus size={16} />}>Add Transaction</Button>
             </Link>
@@ -207,7 +213,7 @@ export default function StocksPage() {
           <thead>
             <tr>
               <th>S. No.</th>
-              <th>Currency</th>
+              <th>Instrument</th>
               <th>Quantity</th>
               <th>Invested Amount</th>
               <th>Average price</th>
@@ -222,21 +228,18 @@ export default function StocksPage() {
               const avgBuyPrice =
                 instrumentData.totalValue / instrumentData.totalQuantity;
 
-              const crypto = getCryptoData(instrumentData.currency);
+              const stock = getStockData(instrumentData.symbol);
 
-              let price = Number(crypto.Price.slice(1).replace(",", "")) * 82;
+              let price = parseInt(stock.CLOSE).toFixed(2);
 
               const profit = price - avgBuyPrice;
               return (
                 <tr key={`${key}-${idx}`}>
                   <td>{idx + 1}</td>
-                  <td>{instrumentData.currency}</td>
+                  <td>{instrumentData.symbol}</td>
                   <td>{instrumentData.totalQuantity}</td>
                   <td>{instrumentData.totalValue}</td>
-                  <td>
-                    {instrumentData.totalValue / instrumentData.totalQuantity ||
-                      "-"}
-                  </td>
+                  <td>{avgBuyPrice ? avgBuyPrice.toFixed(2) : "-"}</td>
                   <td>
                     <Text color={price >= 0 ? "green" : "red"}>
                       {price || "-"}
@@ -244,12 +247,12 @@ export default function StocksPage() {
                   </td>
                   <td>
                     <Text color={instrumentData.profit >= 0 ? "green" : "red"}>
-                      {instrumentData.profit}
+                      {instrumentData.profit.toFixed(2)}
                     </Text>
                   </td>
                   <td>
                     <Text color={profit >= 0 ? "green" : "red"}>
-                      {profit || "-"}
+                      {profit ? profit.toFixed(2) : "-"}
                     </Text>
                   </td>
                 </tr>

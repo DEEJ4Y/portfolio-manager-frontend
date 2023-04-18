@@ -46,7 +46,8 @@ export default function CryptoPage() {
           data.instrumentData[transaction.currency] = {
             currency: transaction.currency,
             totalQuantity: Number(transaction.quantity),
-            totalValue: Number(transaction.orderValue),
+            totalValue:
+              Number(transaction.orderValue) * Number(transaction.quantity),
             profit: 0,
           };
         } else {
@@ -149,25 +150,25 @@ export default function CryptoPage() {
             type="text"
             label={`₹${values.totalProfitAndLoss}`}
             labelColor={values.totalProfitAndLoss >= 0 ? "green" : "red"}
-            title="Realized Profit & Loss"
+            title="Realized Profit"
           />
           <DashColCard
             type="text"
-            label={`₹${values.unrealizedProfitAndLoss}`}
+            label={`₹${Number(values.unrealizedProfitAndLoss).toFixed(2)}`}
             labelColor={values.unrealizedProfitAndLoss >= 0 ? "green" : "red"}
-            title="Unrealized Profit & Loss"
+            title="Unrealized Profit"
           />
           <DashColCard
             type="text"
-            label={`₹${
+            label={`₹${Number(
               values.totalProfitAndLoss + values.unrealizedProfitAndLoss
-            }`}
+            ).toFixed(2)}`}
             labelColor={
               values.totalProfitAndLoss + values.unrealizedProfitAndLoss >= 0
                 ? "green"
                 : "red"
             }
-            title="Net Profit & Loss"
+            title="Net Profit Absolute"
           />
           <DashColCard
             label={profitPercent ? `${profitPercent.toFixed(2)}%` : "0%"}
@@ -186,7 +187,7 @@ export default function CryptoPage() {
                 tooltip: `Invested ${investmentPercent.toFixed(2)}%`,
               },
             ]}
-            title="Net Invested"
+            title="Net Profit Percentage"
           />
         </Grid>
 
