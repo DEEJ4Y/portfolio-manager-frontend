@@ -1,7 +1,17 @@
 import DashAppShell from "@/components/AppShell";
 import { useLocalStorage } from "@mantine/hooks";
-
+import { useRouter } from "next/router";
 export default function DashboardPage() {
+  const router = useRouter();
+  const [userDetailsData, setUserDetailsData] = useLocalStorage({
+    key: "userDetails",
+
+    serialize: JSON.stringify,
+    deserialize: JSON.parse,
+  });
+  if (userDetailsData === null) {
+    router.push("/login");
+  }
   const [cryptoTransactions] = useLocalStorage({
     key: "transactions/crypto",
     defaultValue: [],

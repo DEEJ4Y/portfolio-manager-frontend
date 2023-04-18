@@ -6,26 +6,29 @@ import {
   Text,
   useMantineTheme,
 } from "@mantine/core";
+import { useLocalStorage } from "@mantine/hooks";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import {
   Cash,
   ChartLine,
   CurrencyBitcoin,
+  UserCircle,
   DeviceDesktopAnalytics,
   Home2,
   TargetArrow,
   Users,
+  Logout,
 } from "tabler-icons-react";
 
-const DashNavbarItem = ({ title, Icon, href }) => {
+const DashNavbarItem = ({ title, Icon, href, style }) => {
   const theme = useMantineTheme();
   const router = useRouter();
 
   const active = router.pathname === href;
-
+  // if (Name === "Account") return;
   return (
-    <Link href={href || "/"} style={{ textDecoration: "none" }}>
+    <Link href={href || "/"} style={{ textDecoration: "none", ...style }}>
       <Container
         m={0}
         p="md"
@@ -49,8 +52,15 @@ const DashNavbarItem = ({ title, Icon, href }) => {
 };
 
 const DashNavbar = () => {
+  const [userDetailsData, setUserDetailsData] = useLocalStorage({
+    key: "userDetails",
+    defaultValue: null,
+    serialize: JSON.stringify,
+    deserialize: JSON.parse,
+  });
+
   return (
-    <Navbar width={{ base: 300 }} p="xs">
+    <Navbar style={{ height: "100vh" }} width={{ base: 300 }} p="xs">
       <DashNavbarItem
         title="Home"
         href="/dashboard"
@@ -70,6 +80,18 @@ const DashNavbar = () => {
       />
       <DashNavbarItem title="Real Estate" href="/real-estate" Icon={Home2} />
       <DashNavbarItem title="Goals" href="/goals" Icon={TargetArrow} />
+      <DashNavbarItem
+        style={{ marginBottom: "0px", marginTop: "auto" }}
+        title={userDetailsData?.name}
+        Icon={UserCircle}
+        href="/logout"
+      />
+      <DashNavbarItem
+        style={{ marginBottom: "0px", marginTop: "0px" }}
+        title={"Logout"}
+        Icon={Logout}
+        href="/logout"
+      />
     </Navbar>
   );
 };
